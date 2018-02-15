@@ -13,5 +13,10 @@
             "email": "richard@agilepixel.io"
         }
     ],
+    "autoload": {
+        "psr-4": {
+            "AgilePixel\\ImagesRespond": "src",
+        }
+    },
     "prefer-stable": true
 }

@@ -9,5 +9,6 @@
  *
  */
 
+require_once __DIR__ . '/../../../autoload.php';
 $imagesRespond = new AgilePixel\ImagesRespond();
 $imagesRespond->respond();
