@@ -9,7 +9,7 @@
  *
  */
 
-namespace AgilePixel;
+namespace AgilePixel\ImagesRespond;
 
 use Intervention\Image\ImageManagerStatic as Image;
 
