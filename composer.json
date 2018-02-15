@@ -15,7 +15,7 @@
     ],
     "autoload": {
         "psr-4": {
-            "AgilePixel\\ImagesRespond": "src",
+            "AgilePixel\\ImagesRespond": "src"
         }
     },
     "prefer-stable": true
