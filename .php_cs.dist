@@ -1,0 +1,46 @@
+<?php
+$version = exec('git describe --tags --abbrev=0');
+$header = "
+@author Richard Brown <richard@agilepixel.io>
+@copyright ".date('Y')." Agile Pixel
+
+@version ".$version."
+";
+$config = PhpCsFixer\Config::create()
+    ->setRiskyAllowed(true)
+    ->setRules([
+        '@PSR2' => true,
+        '@PHP71Migration' => true,
+        '@PHPUnit60Migration:risky' => true,
+        'align_multiline_comment' => true,
+        'header_comment' => ['header' => $header, 'commentType' => 'PHPDoc'],
+        'ordered_imports' => true,
+        'no_unused_imports' => true,
+        'psr4' => true,
+        'indentation_type' => true,
+        'array_syntax' => ['syntax' => 'short'],
+        'ordered_class_elements' => true,
+        'protected_to_private' => true,
+        'single_quote' => true,
+        'standardize_not_equals' => true,
+        'yoda_style' => false
+    ])
+    ->setFinder(
+        PhpCsFixer\Finder::create()
+            ->in(__DIR__)
+    )
+;
+
+// special handling of fabbot.io service if it's using too old PHP CS Fixer version
+try {
+    PhpCsFixer\FixerFactory::create()
+        ->registerBuiltInFixers()
+        ->registerCustomFixers($config->getCustomFixers())
+        ->useRuleSet(new PhpCsFixer\RuleSet($config->getRules()));
+} catch (PhpCsFixer\ConfigurationException\InvalidConfigurationException $e) {
+    $config->setRules([]);
+} catch (UnexpectedValueException $e) {
+    $config->setRules([]);
+}
+
+return $config;
