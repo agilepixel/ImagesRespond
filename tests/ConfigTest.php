@@ -18,6 +18,8 @@ final class ConfigTest extends TestCase
     public function testClassInit()
     {
         $class = new ImagesRespond();
+        $class->respond('/richard/gits/ImagesRespond/images/respond-500-not_found.png', false);
+        $class->respond('actually_not_found.png', false);
         $this->assertTrue(true);
     }
 }

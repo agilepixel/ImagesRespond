@@ -52,29 +52,39 @@ class ImagesRespond
         $this->options = $resolver->resolve($config);
     }
 
-    public function respond()
+    public function respond($request, $echo = true)
     {
         if (extension_loaded('imagick')) {
             Image::configure(['driver' => 'imagick']);
         }
-        $request = $_SERVER['REQUEST_URI'];
 
-        var_dump($_SERVER['REQUEST_URI']);
+        $fallback = __DIR__ . '/' . $this->options['fallback_image'];
+
         $match = preg_match('/(.*)respond-([0-9]+)h?-(.*\.)(jpg|gif|png|webp|jpeg).*$/i', $request, $matches);
+
         if (!$match) {
-            header('HTTP/1.0 404 Not Found');
-            echo Image::make($this->options['fallback_image'])->response();
+            if ($echo) {
+                header('HTTP/1.0 404 Not Found');
+                echo Image::make($fallback)->response();
+            } else {
+                return Image::make($fallback);
+            }
             exit();
         }
         $size = $matches[2];
         $file = __DIR__ . '/../../../..'.$matches[1].$matches[3].$matches[4];
 
         if (!file_exists($file)) {
-            header('HTTP/1.0 404 Not Found');
-            echo Image::make($this->options['fallback_image'])->resize($size, null, function ($constraint) {
+            $image = Image::make($fallback)->resize($size, null, function ($constraint) {
                 $constraint->aspectRatio();
                 $constraint->upsize();
-            })->response();
+            });
+            if ($echo) {
+                header('HTTP/1.0 404 Not Found');
+                echo $image->response();
+            } else {
+                return $image;
+            }
             exit();
         }
         try {
@@ -92,9 +102,13 @@ class ImagesRespond
                 }
             }, 15, true);
 
-            header('Cache-Control: max-age='.(60 * 60 * 24 * 7).'');
+            if ($echo) {
+                header('Cache-Control: max-age='.(60 * 60 * 24 * 7).'');
 
-            echo $img->response();
+                echo $img->response();
+            } else {
+                return $echo;
+            }
         } catch (Exception $e) {
             header('Cache-Control: max-age='.(60 * 60 * 24 * 7).'');
             $mime = mime_content_type($file);
