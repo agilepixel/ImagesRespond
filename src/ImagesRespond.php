@@ -12,45 +12,73 @@
 namespace AgilePixel\ImagesRespond;
 
 use Intervention\Image\ImageManagerStatic as Image;
+use Symfony\Component\Config\FileLocator;
+use Symfony\Component\Config\Loader\DelegatingLoader;
+use Symfony\Component\Config\Loader\LoaderResolver;
+use Symfony\Component\OptionsResolver\OptionsResolver;
 
 class ImagesRespond
 {
+    public $options;
+    public function __construct()
+    {
+        $candidates = [];
+
+        $directory = explode(DIRECTORY_SEPARATOR, __DIR__);
+        $total = count($directory);
+        for ($x = 0; $x < $total; $x++) {
+            $next = array_pop($directory);
+            $candidates[] = implode(DIRECTORY_SEPARATOR, $directory);
+        }
+        $configDirectories = $candidates;
+
+        $locator = new FileLocator($configDirectories);
+
+        $loaderResolver = new LoaderResolver([new ConfigurationLoader($locator)]);
+        $delegatingLoader = new DelegatingLoader($loaderResolver);
+        $defaultConfig = $locator->locate('.images_respond_default', null, true);
+        $default = $delegatingLoader->load($defaultConfig);
+
+        try {
+            $userConfig = $locator->locate('.images_respond', null, true);
+            $config = $delegatingLoader->load($userConfig);
+        } catch (\Exception $e) {
+            $config = [];
+        }
+
+        $resolver = new OptionsResolver();
+        $resolver->setDefaults($default);
+
+        $this->options = $resolver->resolve($config);
+    }
+
     public function respond()
     {
-        //TODO make the fallback dynamic so it is a more appropriate drop in solution for more sites
-        $fallback = '../images/not_found.png';
-
-
         if (extension_loaded('imagick')) {
             Image::configure(['driver' => 'imagick']);
         }
         $request = $_SERVER['REQUEST_URI'];
-        if (isset($_COOKIE['testing'])) {
-            //exit($request);
-        }
+
+        var_dump($_SERVER['REQUEST_URI']);
         $match = preg_match('/(.*)respond-([0-9]+)h?-(.*\.)(jpg|gif|png|webp|jpeg).*$/i', $request, $matches);
         if (!$match) {
             header('HTTP/1.0 404 Not Found');
-            echo Image::make($fallback)->response();
+            echo Image::make($this->options['fallback_image'])->response();
             exit();
         }
         $size = $matches[2];
-        $file = '..'.$matches[1].$matches[3].$matches[4];
+        $file = __DIR__ . '/../../../..'.$matches[1].$matches[3].$matches[4];
 
         if (!file_exists($file)) {
             header('HTTP/1.0 404 Not Found');
-            echo Image::make($fallback)->resize($size, null, function ($constraint) {
+            echo Image::make($this->options['fallback_image'])->resize($size, null, function ($constraint) {
                 $constraint->aspectRatio();
                 $constraint->upsize();
             })->response();
             exit();
         }
         try {
-            $img = Image::cache(function ($image) {
-                $request = $_SERVER['REQUEST_URI'];
-                $match = preg_match('/(.*)respond-([0-9]+)h?-(.*\.)(jpg|gif|png|webp|jpeg).*$/i', $request, $matches);
-                $size = $matches[2];
-                $file = '..'.$matches[1].$matches[3].$matches[4];
+            $img = Image::cache(function ($image) use ($request, $file, $size) {
                 if (preg_match('/(.*)respond-([0-9]+)h-(.*\.)(jpg|gif|png|webp|jpeg).*$/i', $request)) {
                     return $image->make($file)->resize(null, $size, function ($constraint) {
                         $constraint->aspectRatio();
