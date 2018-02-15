@@ -10,8 +10,8 @@ $config = PhpCsFixer\Config::create()
     ->setRiskyAllowed(true)
     ->setRules([
         '@PSR2' => true,
-        '@PHP71Migration' => true,
-        '@PHPUnit60Migration:risky' => true,
+        '@PHP56Migration:risky' => true,
+        '@PHPUnit57Migration:risky' => true,
         'align_multiline_comment' => true,
         'header_comment' => ['header' => $header, 'commentType' => 'PHPDoc'],
         'ordered_imports' => true,

@@ -1,7 +1,16 @@
-<phpunit bootstrap="./tests/bootstrap.php">
+<phpunit bootstrap="./tests/bootstrap.php" colors="true">
 	<testsuites>
 		<testsuite name="Images Respond">
 			<directory>./tests/</directory>
 		</testsuite>
 	</testsuites>
+	<filter>
+		<whitelist>
+	      <directory suffix=".php">./src</directory>
+	  </whitelist>
+	</filter>
+	<logging>
+	 <log type="coverage-html" target="./coverage" charset="UTF-8" />
+	 <log type="coverage-text" target="php://stdout" showUncoveredFiles="false"/>
+ </logging>
 </phpunit>
