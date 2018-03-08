@@ -1,6 +1,6 @@
 # ImagesRespond
 
-[![Build Status](https://travis-ci.org/agilepixel/ImagesRespond.svg?branch=master)](https://travis-ci.org/agilepixel/ImagesRespond)
+[![Build Status](https://travis-ci.org/agilepixel/ImagesRespond.svg?branch=master)](https://travis-ci.org/agilepixel/ImagesRespond) [![Coverage Status](https://coveralls.io/repos/github/agilepixel/ImagesRespond/badge.svg?branch=master)](https://coveralls.io/github/agilepixel/ImagesRespond?branch=master)
 
 A quick drop-in PHP library to output scaled images for responsive purposes
 
@@ -31,9 +31,9 @@ Enter into your server configuration or .htaccess, customise based on your desir
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_URI} respond-[0-9]+h?-.*\.(jpg|gif|png|webp|jpeg)$
     RewriteRule ^(.*)$ vendor/agilepixel/imagesrespond/src/rewrite.php [L]
-    
+
  ### Configure for Nginx
- 
+
  Enter the following into your Nginx server configuration, customise based on your desired configuration
- 
+
     rewrite respond-([0-9]+)h?-.*\.(jpg|gif|png|webp|jpeg)$ /vendor/agilepixel/imagesrespond/src/rewrite.php last;
