@@ -72,7 +72,7 @@ class ImagesRespond
             exit();
         }
         $size = $matches[2];
-        $file = __DIR__ . '/../../../..'.$matches[1].$matches[3].$matches[4];
+        $file = __DIR__ . '/' . $this->options['root_dir'].$matches[1].$matches[3].$matches[4];
 
         if (!file_exists($file)) {
             $image = Image::make($fallback)->resize($size, null, function ($constraint) {
