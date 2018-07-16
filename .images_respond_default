@@ -1,4 +1,4 @@
 {
-  "fallback_image": "../images/not_found.png"
-  "root_dir": "../../../../"
+  "fallback_image": "../images/not_found.png",
+  "root_dir": "../../../.."
 }
