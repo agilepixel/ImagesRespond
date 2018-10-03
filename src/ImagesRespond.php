@@ -5,7 +5,7 @@
  * @author Richard Brown <richard@agilepixel.io>
  * @copyright 2018 Agile Pixel
  *
- * @version v1.0.0
+ * @version v0.1.1
  *
  */
 
@@ -68,7 +68,7 @@ class ImagesRespond
             if ($this->using_webp === false || ($this->using_webp === true && \Imagick::queryFormats('WEBP'))) {
                 Image::configure(['driver' => 'imagick']);
             }
-        } else if ($this->using_webp === true && !function_exists('imagewebp')) {
+        } elseif ($this->using_webp === true && !function_exists('imagewebp')) {
             $this->using_webp = false;
         }
 
@@ -87,11 +87,16 @@ class ImagesRespond
         }
 
         $encode = $matches[4];
+        $imageType = $encode;
         if ($this->using_webp) {
             $encode = 'webp';
+            $imageType = $encode;
         }
         if ($encode == 'jpeg') {
             $encode = 'jpg';
+        }
+        if ($encode == 'jpg') {
+            $imageType = 'jpeg';
         }
 
         $size = $matches[2];
@@ -116,7 +121,10 @@ class ImagesRespond
             $outputfilename = __DIR__ . '/' . $this->options['root_dir'].$outputurl;
             if (file_exists($outputfilename)) {
                 if ($echo) {
-                    header('Location: '.$outputurl, true, 302);
+                    $fp = fopen($outputfilename, 'rb');
+                    header('Content-Type: image/'.$imageType);
+                    header('Content-Length: ' . filesize($outputfilename));
+                    fpassthru($fp);
                     exit;
                 } else {
                     return Image::make($outputfilename);
