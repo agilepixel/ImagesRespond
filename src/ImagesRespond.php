@@ -5,7 +5,7 @@
  * @author Richard Brown <richard@agilepixel.io>
  * @copyright 2018 Agile Pixel
  *
- * @version v0.0.3
+ * @version v1.0.0
  *
  */
 
@@ -25,7 +25,6 @@ class ImagesRespond
 
     public function __construct()
     {
-        $start = microtime(true);
         $candidates = [];
 
         $directory = explode(DIRECTORY_SEPARATOR, __DIR__);
@@ -61,22 +60,22 @@ class ImagesRespond
                 $this->using_webp = true;
             }
         }
-        echo microtime(true) - $start;
     }
 
     public function respond($request, $echo = true)
     {
-        $start = microtime(true);
         if (extension_loaded('imagick')) {
             if ($this->using_webp === false || ($this->using_webp === true && \Imagick::queryFormats('WEBP'))) {
                 Image::configure(['driver' => 'imagick']);
             }
+        } else if ($this->using_webp === true && !function_exists('imagewebp')) {
+            $this->using_webp = false;
         }
 
         $fallback = __DIR__ . '/' . $this->options['fallback_image'];
 
         $match = preg_match('/(.*)respond-([0-9]+)h?-(.*\.)(jpg|gif|png|webp|jpeg).*$/i', $request, $matches);
-        
+
         if (!$match) {
             if ($echo) {
                 header('HTTP/1.0 404 Not Found');
@@ -86,7 +85,7 @@ class ImagesRespond
             }
             exit();
         }
-        
+
         $encode = $matches[4];
         if ($this->using_webp) {
             $encode = 'webp';
@@ -94,7 +93,7 @@ class ImagesRespond
         if ($encode == 'jpeg') {
             $encode = 'jpg';
         }
-        
+
         $size = $matches[2];
         $file = __DIR__ . '/' . $this->options['root_dir'].$matches[1].$matches[3].$matches[4];
 
@@ -123,7 +122,7 @@ class ImagesRespond
                     return Image::make($outputfilename);
                 }
             }
-        
+
             $outputpath = __DIR__ . '/' . $this->options['root_dir'].$matches[1].'cache';
             if (!is_dir($outputpath)) {
                 mkdir($outputpath);
@@ -141,6 +140,7 @@ class ImagesRespond
                     $constraint->upsize();
                 });
             }
+
             if ($echo) {
                 header('Cache-Control: max-age='.(60 * 60 * 24 * 7).'');
                 if ($this->options['save_copy']) {
@@ -148,7 +148,7 @@ class ImagesRespond
                 }
                 echo $img->response();
             } else {
-                return $echo;
+                return $img;
             }
         } catch (Exception $e) {
             header('Cache-Control: max-age='.(60 * 60 * 24 * 7).'');

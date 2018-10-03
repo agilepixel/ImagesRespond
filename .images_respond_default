@@ -1,6 +1,6 @@
 {
   "fallback_image": "../images/not_found.png",
   "root_dir": "../../../..",
-  "webp": true,
+  "webp": false,
   "save_copy": false
 }
