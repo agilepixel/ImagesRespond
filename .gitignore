@@ -1,5 +1,4 @@
 vendor/
 coverage/
 build/
-composer.lock
 .php_cs.cache

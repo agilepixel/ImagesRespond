@@ -5,7 +5,7 @@
  * @author Richard Brown <richard@agilepixel.io>
  * @copyright 2018 Agile Pixel
  *
- * @version
+ * @version v0.0.3
  *
  */
 
@@ -20,8 +20,12 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 class ImagesRespond
 {
     public $options;
+
+    private $using_webp = false;
+
     public function __construct()
     {
+        $start = microtime(true);
         $candidates = [];
 
         $directory = explode(DIRECTORY_SEPARATOR, __DIR__);
@@ -50,18 +54,29 @@ class ImagesRespond
         $resolver->setDefaults($default);
 
         $this->options = $resolver->resolve($config);
+
+        if ($this->options['webp'] === true && isset($_SERVER['HTTP_ACCEPT'])) {
+            $accept = explode(',', $_SERVER['HTTP_ACCEPT']);
+            if (in_array('image/webp', $accept)) {
+                $this->using_webp = true;
+            }
+        }
+        echo microtime(true) - $start;
     }
 
     public function respond($request, $echo = true)
     {
+        $start = microtime(true);
         if (extension_loaded('imagick')) {
-            Image::configure(['driver' => 'imagick']);
+            if ($this->using_webp === false || ($this->using_webp === true && \Imagick::queryFormats('WEBP'))) {
+                Image::configure(['driver' => 'imagick']);
+            }
         }
 
         $fallback = __DIR__ . '/' . $this->options['fallback_image'];
 
         $match = preg_match('/(.*)respond-([0-9]+)h?-(.*\.)(jpg|gif|png|webp|jpeg).*$/i', $request, $matches);
-
+        
         if (!$match) {
             if ($echo) {
                 header('HTTP/1.0 404 Not Found');
@@ -71,11 +86,20 @@ class ImagesRespond
             }
             exit();
         }
+        
+        $encode = $matches[4];
+        if ($this->using_webp) {
+            $encode = 'webp';
+        }
+        if ($encode == 'jpeg') {
+            $encode = 'jpg';
+        }
+        
         $size = $matches[2];
         $file = __DIR__ . '/' . $this->options['root_dir'].$matches[1].$matches[3].$matches[4];
 
         if (!file_exists($file)) {
-            $image = Image::make($fallback)->resize($size, null, function ($constraint) {
+            $image = Image::make($fallback)->encode($encode)->resize($size, null, function ($constraint) {
                 $constraint->aspectRatio();
                 $constraint->upsize();
             });
@@ -87,24 +111,41 @@ class ImagesRespond
             }
             exit();
         }
-        try {
-            $img = Image::cache(function ($image) use ($request, $file, $size) {
-                if (preg_match('/(.*)respond-([0-9]+)h-(.*\.)(jpg|gif|png|webp|jpeg).*$/i', $request)) {
-                    return $image->make($file)->resize(null, $size, function ($constraint) {
-                        $constraint->aspectRatio();
-                        $constraint->upsize();
-                    });
-                } else {
-                    return $image->make($file)->resize($size, null, function ($constraint) {
-                        $constraint->aspectRatio();
-                        $constraint->upsize();
-                    });
-                }
-            }, 15, true);
 
+        if ($this->options['save_copy']) {
+            $outputurl = $matches[1].'cache/'.md5_file($file).$matches[2].'.'.$encode;
+            $outputfilename = __DIR__ . '/' . $this->options['root_dir'].$outputurl;
+            if (file_exists($outputfilename)) {
+                if ($echo) {
+                    header('Location: '.$outputurl, true, 302);
+                    exit;
+                } else {
+                    return Image::make($outputfilename);
+                }
+            }
+        
+            $outputpath = __DIR__ . '/' . $this->options['root_dir'].$matches[1].'cache';
+            if (!is_dir($outputpath)) {
+                mkdir($outputpath);
+            }
+        }
+        try {
+            if (preg_match('/(.*)respond-([0-9]+)h-(.*\.)(jpg|gif|png|webp|jpeg).*$/i', $request)) {
+                $img = Image::make($file)->encode($encode)->resize(null, $size, function ($constraint) {
+                    $constraint->aspectRatio();
+                    $constraint->upsize();
+                });
+            } else {
+                $img = Image::make($file)->encode($encode)->resize($size, null, function ($constraint) {
+                    $constraint->aspectRatio();
+                    $constraint->upsize();
+                });
+            }
             if ($echo) {
                 header('Cache-Control: max-age='.(60 * 60 * 24 * 7).'');
-
+                if ($this->options['save_copy']) {
+                    $img->save($outputfilename);
+                }
                 echo $img->response();
             } else {
                 return $echo;
