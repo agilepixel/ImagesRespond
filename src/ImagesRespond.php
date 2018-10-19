@@ -79,6 +79,7 @@ class ImagesRespond
         if (!$match) {
             if ($echo) {
                 header('HTTP/1.0 404 Not Found');
+                $this->_setCacheHeader(0);
                 echo Image::make($fallback)->response();
             } else {
                 return Image::make($fallback);
@@ -108,6 +109,7 @@ class ImagesRespond
                 $constraint->upsize();
             });
             if ($echo) {
+                $this->_setCacheHeader(0);
                 header('HTTP/1.0 404 Not Found');
                 echo $image->response();
             } else {
@@ -121,6 +123,7 @@ class ImagesRespond
             $outputfilename = __DIR__ . '/' . $this->options['root_dir'].$outputurl;
             if (file_exists($outputfilename)) {
                 if ($echo) {
+                    $this->_setCacheHeader((60 * 60 * 24 * 7));
                     $fp = fopen($outputfilename, 'rb');
                     header('Content-Type: image/'.$imageType);
                     header('Content-Length: ' . filesize($outputfilename));
@@ -150,7 +153,7 @@ class ImagesRespond
             }
 
             if ($echo) {
-                header('Cache-Control: max-age='.(60 * 60 * 24 * 7).'');
+                $this->_setCacheHeader((60 * 60 * 24 * 7));
                 if ($this->options['save_copy']) {
                     $img->save($outputfilename);
                 }
@@ -159,10 +162,23 @@ class ImagesRespond
                 return $img;
             }
         } catch (Exception $e) {
-            header('Cache-Control: max-age='.(60 * 60 * 24 * 7).'');
+            $this->_setCacheHeader((60 * 60 * 24 * 7));
             $mime = mime_content_type($file);
             header('Content-type: '.$mime);
             readfile($file);
+        }
+    }
+
+    private function _setCacheHeader($cacheTime=0)
+    {
+        $ts = gmdate('D, d M Y H:i:s', time() + $cacheTime) . ' GMT';
+        header("Expires: $ts", true);
+        if ($cacheTime > 0) {
+            header('Pragma: cache', true);
+            header("Cache-Control: max-age=$cacheTime", true);
+        } else {
+            header('Pragma: no-cache', true);
+            header('Cache-Control: no-cache, must-revalidate', true);
         }
     }
 }
