@@ -5,7 +5,7 @@
  * @author Richard Brown <richard@agilepixel.io>
  * @copyright 2018 Agile Pixel
  *
- * @version v0.1.1
+ * @version v0.1.3
  *
  */
 
@@ -118,12 +118,14 @@ class ImagesRespond
             exit();
         }
 
+        $modifiedTime = filemtime($file);
+
         if ($this->options['save_copy']) {
             $outputurl = $matches[1].'cache/'.md5_file($file).$matches[2].'.'.$encode;
             $outputfilename = __DIR__ . '/' . $this->options['root_dir'].$outputurl;
             if (file_exists($outputfilename)) {
                 if ($echo) {
-                    $this->_setCacheHeader((60 * 60 * 24 * 7));
+                    $this->_setCacheHeader((60 * 60 * 24 * 7), $modifiedTime);
                     $fp = fopen($outputfilename, 'rb');
                     header('Content-Type: image/'.$imageType);
                     header('Content-Length: ' . filesize($outputfilename));
@@ -153,7 +155,7 @@ class ImagesRespond
             }
 
             if ($echo) {
-                $this->_setCacheHeader((60 * 60 * 24 * 7));
+                $this->_setCacheHeader((60 * 60 * 24 * 7), $modifiedTime);
                 if ($this->options['save_copy']) {
                     $img->save($outputfilename);
                 }
@@ -162,16 +164,21 @@ class ImagesRespond
                 return $img;
             }
         } catch (Exception $e) {
-            $this->_setCacheHeader((60 * 60 * 24 * 7));
+            $this->_setCacheHeader((60 * 60 * 24 * 7), $modifiedTime);
             $mime = mime_content_type($file);
             header('Content-type: '.$mime);
             readfile($file);
         }
     }
 
-    private function _setCacheHeader($cacheTime=0)
+    private function _setCacheHeader($cacheTime=0, $modifiedTime = false)
     {
+        if ($modifiedTime === false) {
+            $modifiedTime = time();
+        }
+        $mts = gmdate('D, d M Y H:i:s', $modifiedTime) . ' GMT';
         $ts = gmdate('D, d M Y H:i:s', time() + $cacheTime) . ' GMT';
+        header("Last-Modified: $mts", true);
         header("Expires: $ts", true);
         if ($cacheTime > 0) {
             header('Pragma: cache', true);
