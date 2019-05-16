@@ -3,9 +3,9 @@
 /**
  *
  * @author Richard Brown <richard@agilepixel.io>
- * @copyright 2018 Agile Pixel
+ * @copyright 2019 Agile Pixel
  *
- * @version v0.1.3
+ * @version v0.2.0
  *
  */
 

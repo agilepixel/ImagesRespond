@@ -3,9 +3,9 @@
 /**
  *
  * @author Richard Brown <richard@agilepixel.io>
- * @copyright 2018 Agile Pixel
+ * @copyright 2019 Agile Pixel
  *
- * @version v0.1.3
+ * @version v0.2.0
  *
  */
 
@@ -102,7 +102,9 @@ class ImagesRespond
 
         $size = $matches[2];
         $file = __DIR__ . '/' . $this->options['root_dir'].$matches[1].$matches[3].$matches[4];
-
+        if (!file_exists($file)) {
+            $file = __DIR__ . '/' . $this->options['root_dir'].urldecode($matches[1]).urldecode($matches[3]).urldecode($matches[4]);
+        }
         if (!file_exists($file)) {
             $image = Image::make($fallback)->encode($encode)->resize($size, null, function ($constraint) {
                 $constraint->aspectRatio();
